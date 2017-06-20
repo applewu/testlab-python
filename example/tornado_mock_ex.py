@@ -8,7 +8,6 @@ class ChargeTest(AsyncHTTPTestCase):
     def get_app(self):
         return Application([("/charges", ch.PayHandler)])
 
-    # 对某一笔 charge 付款
     def test_pay_charge(self):
         post_data = {
             "ch_id": "ch_zbLCXPSS0uLS",
