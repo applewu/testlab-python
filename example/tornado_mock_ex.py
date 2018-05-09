@@ -4,6 +4,7 @@ import route.charges as ch
 from tornado.testing import AsyncHTTPTestCase
 from urllib import urlencode
 
+
 class ChargeTest(AsyncHTTPTestCase):
     def get_app(self):
         return Application([("/charges", ch.PayHandler)])
