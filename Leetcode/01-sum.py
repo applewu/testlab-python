@@ -33,7 +33,7 @@ class Solution(object):
                 j -= 1
 
         result_index.append(nums.index(result[0]))
-        # 避免出现 result 中元素相同的情况，第二个数字从 nums 后面往前查找
+        # 为了应对 result 中元素相同的情况，第二个数字从 nums 后面往前查找
         result_index.append(len(nums)-nums[::-1].index(result[1])-1)
 
         return result_index
