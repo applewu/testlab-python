@@ -1,28 +1,35 @@
 # encoding: utf-8
 #
 # ###################
-# 121. Best Time to Buy and Sell Stock
+# 122. Best Time to Buy and Sell Stock II
 # Difficulty:Easy
 # ###################
 #
 # Say you have an array for which the ith element is the price of a given stock on day i.
 #
-# If you were only permitted to complete at most one transaction (i.e., buy one and sell one share of the stock), design an algorithm to find the maximum profit.
+# Design an algorithm to find the maximum profit. You may complete as many transactions as you like (i.e., buy one and sell one share of the stock multiple times).
 #
-# Note that you cannot sell a stock before you buy one.
+# Note: You may not engage in multiple transactions at the same time (i.e., you must sell the stock before you buy again).
 #
 # Example 1:
 #
 # Input: [7,1,5,3,6,4]
-# Output: 5
-# Explanation: Buy on day 2 (price = 1) and sell on day 5 (price = 6), profit = 6-1 = 5.
-# Not 7-1 = 6, as selling price needs to be larger than buying price.
+# Output: 7
+# Explanation: Buy on day 2 (price = 1) and sell on day 3 (price = 5), profit = 5-1 = 4.
+# Then buy on day 4 (price = 3) and sell on day 5 (price = 6), profit = 6-3 = 3.
+#
 # Example 2:
+#
+# Input: [1,2,3,4,5]
+# Output: 4
+# Explanation: Buy on day 1 (price = 1) and sell on day 5 (price = 5), profit = 5-1 = 4.
+# Note that you cannot buy on day 1, buy on day 2 and sell them later, as you are
+#              engaging multiple transactions at the same time. You must sell before buying again.
+# Example 3:
 #
 # Input: [7,6,4,3,1]
 # Output: 0
 # Explanation: In this case, no transaction is done, i.e. max profit = 0.
-
 
 from typing import List
 import sys
@@ -32,57 +39,56 @@ import unittest
 class Solution:
     def maxProfit(self, prices: List[int]) -> int:
         """
-        本题的动态规划方程：
-        maxProfit(A, i) = (A[i] - min(A)) > maxProfit(A, i - 1) ? (A[i] - min(A)): maxProfit(A, i - 1);
+        这道题被我想复杂了，没有看清影响最终结果的本质是什么。解题的时候想到当初做递推 #198 了。
+        看 #122 Example2 想着可能最大收益只有一次交易，就是 A[i]-min(A)；也可能是相邻数字之间的多次交易。
+        但其实应该想想，如果 A[i] 和最小值之间有其他元素，且数值也介于两者之间，那么 A[i]-min(A) = A[i]-XX+XX-min(A)
+        所以，A[i]-min(A) 不需要作为特殊情况考虑，影响最终结果的关键就是相邻数值的大小。稍微优化一下，我这个 68ms 的结果就是后面 64ms 的解法。
 
-        200 / 200 test cases passed.
+        201 / 201 test cases passed.
         Status: Accepted
-        Runtime: 60 ms
-        Memory Usage: 13.9 MB
-        Your runtime beats 83.28 % of python3 submissions.
+        Runtime: 68 ms
+        Memory Usage: 13.8 MB
+        Your runtime beats 26.73 % of python3 submissions.
         """
-        if len(prices) == 0:
+        if len(prices) < 2:
             return 0
 
+        dp1 = 0
+        dp2 = 0
         min_price = sys.maxsize
-        max_profit = 0
-        for i in range(len(prices)):
+
+        if prices[0] < min_price:
+            min_price = prices[0]
+
+        for i in range(1, len(prices)):
             if prices[i] < min_price:
                 min_price = prices[i]
-            if (prices[i] - min_price) > max_profit:
-                max_profit = prices[i] - min_price
-        return max_profit
 
+            dp = max(dp2 + prices[i] - prices[i-1], dp1, prices[i] - min_price)
+            dp1 = dp
+            dp2 = dp1
+
+        return dp1
 
     def maxProfit1(self, prices: List[int]) -> int:
         """
-        BAD EXAMPLE HERE: Brute Force, Time Limit Exceeded
+        我在项目中看到这种 python 代码可能想打人，然而心里又暗搓搓希望自己能够像写出这种代码的人一样，对内置函数用得溜溜地～
+        用 zip 打包成一个个元组，逐个计算了相邻两个数之差，再算总和。逻辑本质跟其他解法是差不多的。
+
+        sample 40 ms submission
         """
-        if len(prices) == 0:
-            return 0
-
-        result = 0
-        for i in range(0, len(prices), 1):
-            for j in range(i + 1, len(prices), 1):
-                if result < (prices[j] - prices[i]):
-                    result = prices[j] - prices[i]
-
-        return result
+        return sum([y - x for x, y in zip(prices[:-1], prices[1:]) if x < y])
 
     def maxProfit2(self, prices: List[int]) -> int:
         """
-        sample 40 ms submission via leetcode.com
-        搞一个新数组来处理，这种思路我也想到过，只是没想到新数组对象初始化可以这样表达出来，神奇 :)
+        sample 64 ms submission
         """
-        dp = [prices[0]] + [0] * (len(prices) - 1)  # dp[i] stores the minmun price until the i-th day
-        res = 0
-        for i in range(1, len(prices)):
-            if prices[i] <= dp[i - 1]:
-                dp[i] = prices[i]
-            else:
-                res = max(res, prices[i] - dp[i - 1])
-                dp[i] = dp[i - 1]
-        return res
+        total = 0
+        for i in range(len(prices)-1):
+            diff = prices[i+1] - prices[i]
+            if diff > 0:
+                total += diff
+        return total
 
 
 class SolutionTest(unittest.TestCase):
@@ -1138,24 +1144,32 @@ class SolutionTest(unittest.TestCase):
                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                   0, 0, 0]
         res = Solution().maxProfit(prices)
-        self.assertEqual(3, res)
+        self.assertEqual(4, res)
 
         prices1 = [7, 1, 5, 3, 6, 4]
         res1 = Solution().maxProfit(prices1)
-        self.assertEqual(5, res1)
+        self.assertEqual(7, res1)
 
         prices2 = [7, 6, 4, 3, 1]
         res2 = Solution().maxProfit(prices2)
         self.assertEqual(0, res2)
 
-        prices3 = []
+        prices3 = [7, 6, 4, 3, 1]
         res3 = Solution().maxProfit(prices3)
         self.assertEqual(0, res3)
 
-        prices4 = [1]
+        prices4 = [1, 2, 3, 4, 5]
         res4 = Solution().maxProfit(prices4)
-        self.assertEqual(0, res4)
+        self.assertEqual(4, res4)
 
         prices = [2, 1, 4]
         res = Solution().maxProfit(prices)
         self.assertEqual(3, res)
+
+        prices = [6, 1, 3, 2, 4, 7]
+        res = Solution().maxProfit(prices)
+        self.assertEqual(7, res)
+
+        prices = [1, 1, 1, 1]
+        res = Solution().maxProfit(prices)
+        self.assertEqual(0, res)
